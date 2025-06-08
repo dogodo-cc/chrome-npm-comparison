@@ -1,0 +1,19 @@
+#npm-comparison-add-btn-make-sure-unique {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  padding: 4px 6px;
+  color: var(--color-fg-danger, #bb2e3e);
+
+  &.hidden {
+    display: none;
+  }
+}
+
+#npm-comparison-container-make-sure-unique {
+  position: fixed;
+  bottom: 100px;
+  right: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/chrome-manifest.json",
+  "name": "chrom-npm-comparison-development",
+  "version": "1.0.0",
+  "description": "A browser extension designed for comparing npm packages",
+  "homepage_url": "https://github.com/dogodo-cc/chrome-npm-comparison",
+  "manifest_version": 3,
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.npmjs.com/package/*",
+        "https://www.npmjs.com/search?*"
+      ],
+      "css": ["./src/style.css"],
+      "js": ["./src/index.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "images/logo-128.png",
+    "32": "images/logo-128.png",
+    "64": "images/logo-128.png",
+    "128": "images/logo-128.png"
+  }
+}
