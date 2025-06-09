@@ -1,7 +1,4 @@
 #npm-comparison-add-btn-make-sure-unique {
-  position: fixed;
-  right: 10px;
-  bottom: 10px;
   padding: 4px 6px;
   color: var(--color-fg-danger, #bb2e3e);
 
@@ -12,8 +9,73 @@
 
 #npm-comparison-container-make-sure-unique {
   position: fixed;
-  bottom: 100px;
-  right: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   background-color: #fff;
+
+  & .header {
+    padding-top: 10px;
+    padding-bottom: 20px;
+    background-color: aliceblue;
+  }
+
+  & summary {
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: "auto", "Fira Mono", "cursive";
+    /* 取得默认图标 */
+    list-style: none;
+    text-transform: uppercase;
+  }
+
+  & summary::before {
+    content: "👆 show config";
+    font-size: 1.2em;
+    color: #333;
+  }
+
+  & details[open] summary::before {
+    content: "👇 hide config";
+  }
+
+  & h3 {
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  & .list {
+    margin: 0 auto;
+    --width: 180px;
+    max-width: calc(var(--width) * 6);
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  & .item {
+    width: var(--width);
+    margin-bottom: 8px;
+  }
+
+  & table {
+    border: 1px solid #eee;
+    border-collapse: collapse;
+
+    & thead {
+      text-transform: capitalize;
+    }
+
+    & tr {
+      border: 1px solid #eee;
+    }
+    & td,
+    & th {
+      border: 1px solid #eee;
+      text-align: center;
+      padding: 6px;
+    }
+  }
 }

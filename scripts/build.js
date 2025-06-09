@@ -28,8 +28,8 @@ const root = process.cwd();
     JSON.stringify(manifest, null, 2)
   );
 
-  await rm(join(root, "chrom-npm-comparison.zip"), { force: true });
+  await rm(join(root, "npm-comparison.zip"), { force: true });
 
   // only for macOS
-  exec("zip -r chrom-npm-comparison.zip dist");
+  exec("zip -r npm-comparison.zip dist");
 })();

@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
-  "name": "chrom-npm-comparison-development",
+  "name": "npm-comparison-development",
   "version": "1.0.0",
   "description": "A browser extension designed for comparing npm packages",
-  "homepage_url": "https://github.com/dogodo-cc/chrome-npm-comparison",
+  "homepage_url": "https://github.com/dogodo-cc/npm-comparison",
   "manifest_version": 3,
   "permissions": ["storage"],
   "content_scripts": [
