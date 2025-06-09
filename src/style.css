@@ -58,11 +58,17 @@
   & .item {
     width: var(--width);
     margin-bottom: 8px;
+    cursor: pointer;
+    & input,
+    & label {
+      cursor: inherit;
+    }
   }
 
   & table {
     border: 1px solid #eee;
     border-collapse: collapse;
+    margin: 20px auto;
 
     & thead {
       text-transform: capitalize;

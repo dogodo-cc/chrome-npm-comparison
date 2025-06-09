@@ -363,12 +363,22 @@ function renderConfigPanle(type, configsList, configLocal) {
   `;
 }
 
-const regex = /github\.com[\/:]([^\/]+)/i;
+const regexAutor = /github\.com[\/:]([^\/]+)/i;
 function getAutor(githubURL) {
-  const match = githubURL.match(regex);
+  const match = githubURL.match(regexAutor);
   if (match) {
     return match[1];
   }
+}
+
+// 有的 npm 包名和仓库名并不是一致的
+// 比如 git+https://github.com/archiverjs/node-zip-stream.git
+// npm: zip-stream 🧐  github:node-zip-stream
+// 所以在获取 github 相关图标时要用仓库名称
+const regexRepo = /(?:\/|^)([^\/]+?)\.git/;
+function getRepo(githubURL) {
+  const match = githubURL.match(regexRepo);
+  return match ? match[1] : null;
 }
 
 function generateGithubImg(config, pkg) {
@@ -376,9 +386,11 @@ function generateGithubImg(config, pkg) {
     return config.generateImg(pkg);
   } else {
     if (pkg.repository?.url) {
-      return `<img src="https://flat.badgen.net/github/${
-        config.value
-      }/${getAutor(pkg.repository.url)}/${pkg.name}" />`;
+      const src = `https://flat.badgen.net/github/${config.value}/${getAutor(
+        pkg.repository.url
+      )}/${getRepo(pkg.repository.url) || pkg.name}`;
+
+      return `<img src="${src}" />`;
     }
     return '<span title="empty repository">-</span>';
   }
