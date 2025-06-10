@@ -8,10 +8,7 @@
   "permissions": ["storage"],
   "content_scripts": [
     {
-      "matches": [
-        "https://www.npmjs.com/package/*",
-        "https://www.npmjs.com/search?*"
-      ],
+      "matches": ["https://www.npmjs.com/package/*", "https://www.npmjs.com/search?*"],
       "css": ["./src/style.css"],
       "js": ["./src/index.js"],
       "run_at": "document_end"
