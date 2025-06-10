@@ -52,6 +52,19 @@ const npmBadgeConfigsList = [
     value: 'types',
     default: true,
   },
+  {
+    label: 'install size',
+    value: 'size',
+    default: true,
+    generateImg(pkg, isHtml = true) {
+      const a = `https://packagephobia.com/result?p=${pkg.name}`;
+      const img = `https://packagephobia.com/badge?p=${pkg.name}`;
+      if (isHtml) {
+        return `<a target="_blank" href="${a}"><img src="${img}" /></a>`;
+      }
+      return `[![](${img})](${a})`;
+    },
+  },
 ];
 
 // 数据来源： https://flat.badgen.net/github
@@ -97,7 +110,7 @@ const githubBadgeConfigsList = [
       if (isHtml) {
         return imgURL ? `<a target="_blank" href="${package.homepage}"><img alt="stars" src="${imgURL}" /></a>` : emptyHtml;
       }
-      return imgURL ? `[![stars](${imgURL})](${imgURL})` : emptyMarkdown;
+      return imgURL ? `[![stars](${imgURL})](${package.homepage})` : emptyMarkdown;
     },
   },
   {
@@ -155,16 +168,18 @@ function observerTitle() {
   const mb = new MutationObserver((mutationsList) => {
     for (const mutation of mutationsList) {
       if (mutation.type === 'characterData') {
+        console.log('characterData');
         initAddBtn();
+        toggleAddBtnHidden();
       }
     }
   });
   mb.observe(document.querySelector('#main h2'), { childList: true, subtree: true, characterData: true });
 }
 
-async function getStorage(area = 'local', key, defaultValue) {
+async function getStorage(key, defaultValue) {
   return new Promise((resolve) => {
-    chrome.storage[area].get(key, (result) => {
+    chrome.storage.sync.get(key, (result) => {
       if (chrome.runtime.lastError) {
         resolve(defaultValue);
       } else {
@@ -175,7 +190,7 @@ async function getStorage(area = 'local', key, defaultValue) {
 }
 
 async function getPackageList() {
-  return getStorage('local', 'packageList', []);
+  return getStorage('packageList', []);
 }
 
 async function fetchPackageData(list) {
@@ -202,6 +217,10 @@ async function render(list) {
 
   toggleAddBtnHidden(list);
 
+  const $panel = document.getElementById(containerId);
+
+  $panel.classList.toggle('empty', list.length === 0);
+
   let container = document.querySelector(`#${containerId} section.body`);
   if (!container) {
     return;
@@ -212,16 +231,16 @@ async function render(list) {
     return;
   }
 
-  const npmBadgeUser = await getStorage('sync', 'npm', {});
+  const npmBadgeUser = await getStorage('npm', {});
   const npmBadgeConfigsListChecked = npmBadgeConfigsList.filter((c) => npmBadgeUser[c.value] ?? c.default);
 
-  const githubBadgeUser = await getStorage('sync', 'github', {});
+  const githubBadgeUser = await getStorage('github', {});
   const githubBadgeConfigsListChecked = githubBadgeConfigsList.filter((c) => githubBadgeUser[c.value] ?? c.default);
 
   const fragment = document.createDocumentFragment();
   const packageList = await fetchPackageData(list);
 
-  const isTransposed = (await getStorage('sync', 'theme', {}))['transpose-table'];
+  const isTransposed = (await getStorage('theme', {}))['transpose-table'];
 
   if (isTransposed) {
     packageList.forEach((pkg) => {
@@ -285,7 +304,7 @@ async function render(list) {
 
   markdownContent = generateMarkdownTable(packageList, npmBadgeConfigsListChecked, githubBadgeConfigsListChecked, isTransposed);
 
-  // console.log('Package Data:', packageList);
+  console.log('Package Data:', packageList);
 }
 
 function initAddBtn() {
@@ -305,7 +324,7 @@ function initAddBtn() {
     const package = location.pathname.replace('/package/', '');
     if (!list.includes(package)) {
       list.push(package);
-      chrome.storage.local.set({ packageList: list }, () => {
+      chrome.storage.sync.set({ packageList: list }, () => {
         render(list);
       });
     }
@@ -316,9 +335,9 @@ async function initPanle() {
   const $panel = document.createElement('div');
   $panel.id = containerId;
 
-  const npmConfig = await getStorage('sync', 'npm', {});
-  const githubConfig = await getStorage('sync', 'github', {});
-  const themeConfig = await getStorage('sync', 'theme', {});
+  const npmConfig = await getStorage('npm', {});
+  const githubConfig = await getStorage('github', {});
+  const themeConfig = await getStorage('theme', {});
 
   $panel.innerHTML = `
     <div class="toggle-show-panel"></div>
@@ -337,6 +356,9 @@ async function initPanle() {
         </section>
         <section class="body">
         </section>
+        <section class="footer">
+          <button class="clear button-72">clear all</button>
+        </section>
     </section>
   `;
 
@@ -349,7 +371,7 @@ async function initPanle() {
       const badge = e.target.name;
       const value = e.target.checked;
 
-      const _data = await getStorage('sync', type, {});
+      const _data = await getStorage(type, {});
       Object.assign(_data, { [badge]: value });
 
       chrome.storage.sync.set({ [type]: _data }, () => {
@@ -369,7 +391,7 @@ async function initPanle() {
 
         if (i !== -1) {
           list.splice(i, 1);
-          chrome.storage.local.set({ packageList: list }, () => {
+          chrome.storage.sync.set({ packageList: list }, () => {
             render(list);
           });
         }
@@ -378,34 +400,39 @@ async function initPanle() {
     false
   );
 
+  // 显示隐藏
   $panel.querySelector('.toggle-show-panel').addEventListener('click', () => {
     $panel.classList.toggle('hide');
+    chrome.storage.sync.set({ hidePanel: $panel.classList.contains('hide') });
+  });
+  getStorage('hidePanel', false).then((v) => {
+    $panel.classList.toggle('hide', v);
   });
 
+  // 复制 markdown
   $panel.querySelector('.copy-markdown').addEventListener(
     'click',
     (e) => {
-      navigator.clipboard.writeText(markdownContent).then(() => {
-        const old = e.target.textContent;
-        e.target.textContent = 'copy success!!';
-        setTimeout(() => {
-          e.target.textContent = old;
-        }, 2000);
-      });
+      copy(e.target, markdownContent);
     },
     false
   );
 
+  // 复制 html
   $panel.querySelector('.copy-html').addEventListener(
     'click',
     (e) => {
       const tableStr = generateHTMLTable();
-      navigator.clipboard.writeText(tableStr).then(() => {
-        const old = e.target.textContent;
-        e.target.textContent = 'copy success!!';
-        setTimeout(() => {
-          e.target.textContent = old;
-        }, 2000);
+      copy(e.target, tableStr);
+    },
+    false
+  );
+
+  $panel.querySelector('.footer .clear').addEventListener(
+    'click',
+    () => {
+      chrome.storage.sync.set({ packageList: [] }, () => {
+        render([]);
       });
     },
     false
@@ -432,14 +459,7 @@ async function toggleAddBtnHidden(packageList) {
   }
 }
 
-/**
- *
- * @param {github | npm} type
- * @param { 配置列表 } configsList
- * @returns html
- */
-
-function renderConfigPanle(type, configsList, configLocal) {
+function renderConfigPanle(type, configsList, configUser) {
   return `
     <div class="panel ${type}">
       <h3>${type}</h3>
@@ -453,7 +473,7 @@ function renderConfigPanle(type, configsList, configLocal) {
                 type="checkbox"
                 id="${type}-${config.value}" 
                 name="${config.value}" 
-                ${configLocal[config.value] ?? config.default ? 'checked' : ''} 
+                ${configUser[config.value] ?? config.default ? 'checked' : ''} 
               />
               <label for="${type}-${config.value}">${config.label}</label>
             </div>
@@ -465,13 +485,12 @@ function renderConfigPanle(type, configsList, configLocal) {
   `;
 }
 
-const githubRegex = /github\.com[\/:]([^\/]+)\/([^\/.]+)(?:\.git)?$/;
-
 function getGithubURL(pkg) {
   // 从包信息中尽量找到 github 的仓库地址，用来解析 作者 和 仓库名称
-  return pkg.repository?.url || pkg.bugs.url.replace('/issues', '') || pkg.homepage;
+  return pkg.repository?.url || pkg.bugs?.url.replace('/issues', '') || pkg.homepage;
 }
 
+const githubRegex = /github\.com[\/:]([^\/]+)\/([^\/.]+)(?:\.git)?$/;
 function getAutor(githubURL) {
   const match = githubURL.match(githubRegex);
   if (match) {
@@ -539,9 +558,9 @@ function generateMarkdownTable(packagelist, npmList, githubList, isTransposed = 
       }),
       ...githubList,
     ];
-    const header = `| package name | ${badges.map((config) => config.label).join('|')}  | \n`;
+    const header = `| package name | ${badges.map((config) => config.label).join(' | ')}  | \n`;
     markdown += header;
-    markdown += `| --- | ${badges.map(() => '---').join('|')}  \n`;
+    markdown += `| --- | ${badges.map(() => '---').join(' | ')}  \n`;
     packagelist.forEach((pkg) => {
       markdown += `| ${generateTitle(pkg, false)} | ${badges
         .map((config) => {
@@ -550,20 +569,20 @@ function generateMarkdownTable(packagelist, npmList, githubList, isTransposed = 
           }
           return generateGithubImg(config, pkg, false);
         })
-        .join('|')} | \n`;
+        .join(' | ')} | \n`;
     });
   } else {
-    const header = `|  | ${packagelist.map((v) => generateTitle(v, false)).join('|')} | \n`;
+    const header = `|  | ${packagelist.map((v) => generateTitle(v, false)).join(' | ')} | \n`;
     markdown += header;
 
-    markdown += `| --- | ${packagelist.map(() => '---').join('|')}  \n`;
+    markdown += `| --- | ${packagelist.map(() => '---').join(' | ')}  \n`;
 
     npmList.forEach((config) => {
-      markdown += `| ${config.label} | ${packagelist.map((pkg) => generateNpmImg(config, pkg, false)).join('|')} | \n`;
+      markdown += `| ${config.label} | ${packagelist.map((pkg) => generateNpmImg(config, pkg, false)).join(' | ')} | \n`;
     });
 
     githubList.forEach((config) => {
-      markdown += `| ${config.label} | ${packagelist.map((pkg) => generateGithubImg(config, pkg, false)).join('|')} | \n`;
+      markdown += `| ${config.label} | ${packagelist.map((pkg) => generateGithubImg(config, pkg, false)).join(' | ')} | \n`;
     });
   }
 
@@ -586,4 +605,14 @@ function generateHTMLTable(tableSelector, filterFunction) {
   const htmlString = tempContainer.innerHTML;
 
   return htmlString;
+}
+
+function copy($, str) {
+  navigator.clipboard.writeText(str).then(() => {
+    const old = $.textContent;
+    $.textContent = 'copy success!!';
+    setTimeout(() => {
+      $.textContent = old;
+    }, 2000);
+  });
 }

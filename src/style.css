@@ -156,6 +156,18 @@
       }
     }
   }
+
+  & .footer {
+    padding: 20px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  &.empty {
+    & .footer .clear {
+      display: none;
+    }
+  }
 }
 
 /* CSS https://getcssscan.com/css-buttons-examples */
