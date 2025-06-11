@@ -5,6 +5,7 @@ const emptyHtml = '<div class="empty" title="empty repository">-</div>';
 const emptyMarkdown = '-';
 let markdownContent = '';
 let markdownVar = '';
+const markdownLine = '------------------------------------';
 
 const mainfest = chrome.runtime.getManifest();
 
@@ -563,9 +564,9 @@ function generateMarkdownTable(packagelist, npmList, githubList, isTransposed = 
       }),
       ...githubList,
     ];
-    const header = `| package name | ${badges.map((config) => config.label).join(' | ')}  | \n`;
+    const header = `| ${padTableCellToMatchDashLength('package name')} | ${badges.map((config) => padTableCellToMatchDashLength(config.label)).join(' | ')}  | \n`;
     markdown += header;
-    markdown += `| --- | ${badges.map(() => '---').join(' | ')}  |\n`;
+    markdown += `| ${markdownLine} | ${badges.map(() => markdownLine).join(' | ')}  |\n`;
     packagelist.forEach((pkg) => {
       markdown += `| ${convertMarkdownSafely(generateTitle(pkg, false))} | ${badges
         .map((config) => {
@@ -577,17 +578,17 @@ function generateMarkdownTable(packagelist, npmList, githubList, isTransposed = 
         .join(' | ')} | \n`;
     });
   } else {
-    const header = `|  | ${packagelist.map((v) => convertMarkdownSafely(generateTitle(v, false))).join(' | ')} | \n`;
+    const header = `| ${padTableCellToMatchDashLength('')} | ${packagelist.map((v) => convertMarkdownSafely(generateTitle(v, false))).join(' | ')} | \n`;
     markdown += header;
 
-    markdown += `| --- | ${packagelist.map(() => '---').join(' | ')}  |\n`;
+    markdown += `| ${markdownLine} | ${packagelist.map(() => markdownLine).join(' | ')} |\n`;
 
     npmList.forEach((config) => {
-      markdown += `| ${config.label} | ${packagelist.map((pkg) => convertMarkdownSafely(generateNpmImg(config, pkg, false))).join(' | ')} | \n`;
+      markdown += `| ${padTableCellToMatchDashLength(config.label)} | ${packagelist.map((pkg) => convertMarkdownSafely(generateNpmImg(config, pkg, false))).join(' | ')} | \n`;
     });
 
     githubList.forEach((config) => {
-      markdown += `| ${config.label} | ${packagelist.map((pkg) => convertMarkdownSafely(generateGithubImg(config, pkg, false))).join(' | ')} | \n`;
+      markdown += `| ${padTableCellToMatchDashLength(config.label)} | ${packagelist.map((pkg) => convertMarkdownSafely(generateGithubImg(config, pkg, false))).join(' | ')} | \n`;
     });
   }
   return markdown;
@@ -698,9 +699,19 @@ function convertMarkdownSafely(originMD) {
   if (md) {
     // 变量提取成功，将变量写入 markdownVar
     markdownVar += md.variable;
-    return md.content;
+    return padTableCellToMatchDashLength(md.content);
   } else {
     // 变量提取失败，返回原数据，不影响 Markdown 展示
-    return originMD;
+    return padTableCellToMatchDashLength(originMD);
   }
+}
+
+function padTableCellToMatchDashLength(str) {
+  if (str.length >= markdownLine.length) return str;
+
+  const padding = markdownLine.length - str.length;
+  const leftPadding = ' '.repeat(Math.floor(padding / 2));
+  const rightPadding = ' '.repeat(Math.ceil(padding / 2));
+
+  return leftPadding + str + rightPadding;
 }
