@@ -9,7 +9,7 @@
 ![Chrome Web Store Stars](https://img.shields.io/chrome-web-store/stars/opijdickacjhbendcbbabpgffoppphdg)
 
 <p>
-    <a href="https://chromewebstore.google.com/detail/redirect-skipper/bcjldhihfjnhgmkmdeojigknladnbcek?authuser=0&hl=zh-CN" target="_blank">
+    <a href="hhttps://chromewebstore.google.com/detail/npm-comparison/opijdickacjhbendcbbabpgffoppphdg?authuser=0&hl=zh-CN" target="_blank">
     <img src="./images/chrome.png" width="16" /> Chrome 商店安装
   </a>
 </p>
