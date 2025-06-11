@@ -1,3 +1,36 @@
+<div align="center">
+
+<img src="./images/logo-128.png" width="128"/>
+
+# Npm-Comparison
+
+![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/opijdickacjhbendcbbabpgffoppphdg)
+![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/opijdickacjhbendcbbabpgffoppphdg)
+![Chrome Web Store Stars](https://img.shields.io/chrome-web-store/stars/opijdickacjhbendcbbabpgffoppphdg)
+
+<p>
+    <a href="https://chromewebstore.google.com/detail/redirect-skipper/bcjldhihfjnhgmkmdeojigknladnbcek?authuser=0&hl=zh-CN" target="_blank">
+    <img src="./images/chrome.png" width="16" /> Chrome 商店安装
+  </a>
+</p>
+
+<p>A browser extension designed for comparing npm packages</p>
+<p>一款用于快速制作精美的 npm 包对比表格的浏览器插件</p>
+
+</div>
+
+### 🚀 功能亮点
+
+只需几次鼠标点击就可以生成一份精美的 npm 包对比表格。
+
+可以直接复制到 `Markdown` 文档或者 `HTML` 文档。
+
+让你的技术调研报告看着 👍**高** 👍**大** 👍**上**
+
+![](./images/demo.jpg)
+
+### 下面是一份简单的示例
+
 |                 | [@angular/cli](https://www.npmjs.com/package/@angular/cli)                                                                                                               | [vue](https://www.npmjs.com/package/vue)                                                                                                                                             | [react](https://www.npmjs.com/package/react)                                                                                                    |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | version         | ![version](https://flat.badgen.net/npm/v/@angular/cli)                                                                                                                   | ![version](https://flat.badgen.net/npm/v/vue)                                                                                                                                        | ![version](https://flat.badgen.net/npm/v/react)                                                                                                 |

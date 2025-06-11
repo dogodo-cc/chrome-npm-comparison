@@ -5,6 +5,8 @@ const emptyHtml = '<div class="empty" title="empty repository">-</div>';
 const emptyMarkdown = '-';
 let markdownContent = '';
 
+const mainfest = chrome.runtime.getManifest();
+
 // 数据来源： https://flat.badgen.net/npm
 const npmBadgeConfigsList = [
   {
@@ -57,12 +59,12 @@ const npmBadgeConfigsList = [
     value: 'size',
     default: true,
     generateImg(pkg, isHtml = true) {
-      const a = `https://packagephobia.com/result?p=${pkg.name}`;
+      const link = `https://packagephobia.com/result?p=${pkg.name}`;
       const img = `https://packagephobia.com/badge?p=${pkg.name}`;
-      if (isHtml) {
-        return `<a target="_blank" href="${a}"><img src="${img}" /></a>`;
-      }
-      return `[![](${img})](${a})`;
+
+      const content = generateBadge(img, 'install size', link);
+
+      return isHtml ? content.html : content.markdown;
     },
   },
 ];
@@ -107,10 +109,10 @@ const githubBadgeConfigsList = [
       // shields 的 stars 更美观
       const githubURL = getGithubURL(package);
       const imgURL = githubURL ? `https://img.shields.io/github/stars/${getAutor(githubURL)}/${getRepo(githubURL) || package.name}?color=white&label` : '';
-      if (isHtml) {
-        return imgURL ? `<a target="_blank" href="${package.homepage}"><img alt="stars" src="${imgURL}" /></a>` : emptyHtml;
-      }
-      return imgURL ? `[![stars](${imgURL})](${package.homepage})` : emptyMarkdown;
+
+      const content = generateBadge(imgURL, 'stars', package.homepage);
+
+      return isHtml ? content.html : content.markdown;
     },
   },
   {
@@ -221,7 +223,7 @@ async function render(list) {
 
   $panel.classList.toggle('empty', list.length === 0);
 
-  let container = document.querySelector(`#${containerId} section.body`);
+  let container = $panel.querySelector('section.body');
   if (!container) {
     return;
   }
@@ -304,7 +306,9 @@ async function render(list) {
 
   markdownContent = generateMarkdownTable(packageList, npmBadgeConfigsListChecked, githubBadgeConfigsListChecked, isTransposed);
 
-  console.log('Package Data:', packageList);
+  if (mainfest.name.includes('-development')) {
+    console.log('Package Data:', packageList);
+  }
 }
 
 function initAddBtn() {
@@ -514,11 +518,9 @@ function generateNpmImg(config, pkg, isHtml = true) {
   }
   const imgURL = `https://flat.badgen.net/npm/${config.value}/${pkg.name}`;
 
-  if (isHtml) {
-    return `<img alt="${config.label}" src="${imgURL}" />`;
-  }
+  const content = generateBadge(imgURL, config.label);
 
-  return `![${config.label}](${imgURL})`;
+  return isHtml ? content.html : content.markdown;
 }
 
 function generateGithubImg(config, pkg, isHtml = true) {
@@ -528,11 +530,9 @@ function generateGithubImg(config, pkg, isHtml = true) {
   const githubURL = getGithubURL(pkg);
   const imgURL = githubURL ? `https://flat.badgen.net/github/${config.value}/${getAutor(githubURL)}/${getRepo(githubURL) || pkg.name}` : '';
 
-  if (isHtml) {
-    return imgURL ? `<img alt="${config.label}" src="${imgURL}" />` : emptyHtml;
-  }
+  const content = generateBadge(imgURL, config.label);
 
-  return imgURL ? `![${config.label}](${imgURL})` : emptyMarkdown;
+  return isHtml ? content.html : content.markdown;
 }
 
 function generateTitle(pkg, isHtml = true) {
@@ -615,4 +615,20 @@ function copy($, str) {
       $.textContent = old;
     }, 2000);
   });
+}
+
+function generateBadge(img, alt = 'badge image', link) {
+  if (!img) {
+    return {
+      html: emptyHtml,
+      markdown: emptyMarkdown,
+    };
+  }
+
+  const imgHTML = `<img alt="${alt}" src="${img}" />`;
+  const imgMD = `![${alt}](${img})`;
+  return {
+    html: link ? `<a href="${link}" target="_blank">${imgHTML}</a>` : imgHTML,
+    markdown: link ? `[${imgMD}](${link})` : imgMD,
+  };
 }
