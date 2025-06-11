@@ -4,6 +4,7 @@ const containerId = 'npm-comparison-container-make-sure-unique';
 const emptyHtml = '<div class="empty" title="empty repository">-</div>';
 const emptyMarkdown = '-';
 let markdownContent = '';
+let markdownVar = '';
 
 const mainfest = chrome.runtime.getManifest();
 
@@ -418,7 +419,7 @@ async function initPanle() {
   $panel.querySelector('.copy-markdown').addEventListener(
     'click',
     (e) => {
-      copy(e.target, markdownContent);
+      copy(e.target, markdownContent + markdownVar);
     },
     false
   );
@@ -526,7 +527,7 @@ function generateNpmImg(config, pkg, isHtml = true) {
 
 function generateGithubImg(config, pkg, isHtml = true) {
   if (typeof config.generateImg === 'function') {
-    return config.generateImg(pkg);
+    return config.generateImg(pkg, isHtml);
   }
   const githubURL = getGithubURL(pkg);
   const imgURL = githubURL ? `https://flat.badgen.net/github/${config.value}/${getAutor(githubURL)}/${getRepo(githubURL) || pkg.name}` : '';
@@ -551,6 +552,9 @@ function generateMarkdownTable(packagelist, npmList, githubList, isTransposed = 
   if (!Array.isArray(packagelist) || !Array.isArray(npmList) || !Array.isArray(githubList)) return;
   let markdown = '';
 
+  // 这个是全局的变量，每次转换先清空一次
+  markdownVar = '\n'; // 用来保存提取出来的 link 和 img 的变量
+
   if (isTransposed) {
     const badges = [
       ...npmList.map((v) => {
@@ -561,32 +565,31 @@ function generateMarkdownTable(packagelist, npmList, githubList, isTransposed = 
     ];
     const header = `| package name | ${badges.map((config) => config.label).join(' | ')}  | \n`;
     markdown += header;
-    markdown += `| --- | ${badges.map(() => '---').join(' | ')}  \n`;
+    markdown += `| --- | ${badges.map(() => '---').join(' | ')}  |\n`;
     packagelist.forEach((pkg) => {
-      markdown += `| ${generateTitle(pkg, false)} | ${badges
+      markdown += `| ${convertMarkdownSafely(generateTitle(pkg, false))} | ${badges
         .map((config) => {
           if (config.__is_npm) {
-            return generateNpmImg(config, pkg, false);
+            return convertMarkdownSafely(generateNpmImg(config, pkg, false));
           }
-          return generateGithubImg(config, pkg, false);
+          return convertMarkdownSafely(generateGithubImg(config, pkg, false));
         })
         .join(' | ')} | \n`;
     });
   } else {
-    const header = `|  | ${packagelist.map((v) => generateTitle(v, false)).join(' | ')} | \n`;
+    const header = `|  | ${packagelist.map((v) => convertMarkdownSafely(generateTitle(v, false))).join(' | ')} | \n`;
     markdown += header;
 
-    markdown += `| --- | ${packagelist.map(() => '---').join(' | ')}  \n`;
+    markdown += `| --- | ${packagelist.map(() => '---').join(' | ')}  |\n`;
 
     npmList.forEach((config) => {
-      markdown += `| ${config.label} | ${packagelist.map((pkg) => generateNpmImg(config, pkg, false)).join(' | ')} | \n`;
+      markdown += `| ${config.label} | ${packagelist.map((pkg) => convertMarkdownSafely(generateNpmImg(config, pkg, false))).join(' | ')} | \n`;
     });
 
     githubList.forEach((config) => {
-      markdown += `| ${config.label} | ${packagelist.map((pkg) => generateGithubImg(config, pkg, false)).join(' | ')} | \n`;
+      markdown += `| ${config.label} | ${packagelist.map((pkg) => convertMarkdownSafely(generateGithubImg(config, pkg, false))).join(' | ')} | \n`;
     });
   }
-
   return markdown;
 }
 
@@ -632,4 +635,72 @@ function generateBadge(img, alt = 'badge image', link) {
     html: link ? `<a href="${link}" target="_blank">${imgHTML}</a>` : imgHTML,
     markdown: link ? `[${imgMD}](${link})` : imgMD,
   };
+}
+
+// 将 markdown 内容转为变量的格式，这样在 markdown 文档中内容看着会比较舒服，也方便后续想调整表格的顺序
+function generateId(prefix = '') {
+  return prefix + Math.random().toString(36).substring(2, 8);
+}
+
+function convertMarkdown(md) {
+  md = md.trim();
+
+  // 情况 1：图片带链接
+  const imageWithLink = md.match(/\[!\[([^\]]*)\]\((.*?)\)\]\((.*?)\)/);
+  if (imageWithLink) {
+    const alt = imageWithLink[1] || '';
+    const imgUrl = imageWithLink[2];
+    const linkUrl = imageWithLink[3];
+
+    const uuid = generateId();
+    const imgVar = uuid + '_img';
+    const linkVar = uuid + '_link';
+
+    return {
+      variable: `[${linkVar}]: ${linkUrl}\n` + `[${imgVar}]: ${imgUrl}\n`,
+      content: `[![${alt}][${imgVar}]][${linkVar}]`,
+    };
+  }
+
+  // 情况 2：仅图片
+  const imageOnly = md.match(/!\[([^\]]*)\]\((.*?)\)/);
+  if (imageOnly) {
+    const alt = imageOnly[1] || '';
+    const imgUrl = imageOnly[2];
+
+    const imgVar = generateId('img_');
+
+    return {
+      variable: `[${imgVar}]: ${imgUrl}\n`,
+      content: `![${alt}][${imgVar}]`,
+    };
+  }
+
+  // 情况 3：仅链接
+  const linkOnly = md.match(/\[([^\]]+)\]\((.*?)\)/);
+  if (linkOnly) {
+    const text = linkOnly[1];
+    const linkUrl = linkOnly[2];
+
+    const linkVar = generateId('link_');
+
+    return {
+      variable: `[${linkVar}]: ${linkUrl}\n`,
+      content: `[${text}][${linkVar}]`,
+    };
+  }
+
+  return null;
+}
+
+function convertMarkdownSafely(originMD) {
+  const md = convertMarkdown(originMD);
+  if (md) {
+    // 变量提取成功，将变量写入 markdownVar
+    markdownVar += md.variable;
+    return md.content;
+  } else {
+    // 变量提取失败，返回原数据，不影响 Markdown 展示
+    return originMD;
+  }
 }
