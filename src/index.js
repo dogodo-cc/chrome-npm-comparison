@@ -330,6 +330,7 @@ function initAddBtn() {
       list.push(package);
       chrome.storage.sync.set({ packageList: list }, () => {
         render(list);
+        document.getElementById(containerId).classList.remove('hide');
       });
     }
   });
