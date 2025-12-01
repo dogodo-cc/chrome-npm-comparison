@@ -178,7 +178,7 @@ function observerTitle() {
       }
     }
   });
-  mb.observe(document.querySelector('#main h2'), { childList: true, subtree: true, characterData: true });
+  mb.observe(document.querySelector('#main h1'), { childList: true, subtree: true, characterData: true });
 }
 
 async function getStorage(key, defaultValue) {
@@ -324,7 +324,7 @@ function initAddBtn() {
     $btn.className = 'button-72';
     $btn.textContent = 'Add to npm Comparison';
   }
-  document.querySelector('#main h2').appendChild($btn);
+  document.querySelector('#main h1').appendChild($btn);
   $btn.addEventListener('click', async () => {
     const list = await getPackageList();
     const package = location.pathname.replace('/package/', '');
